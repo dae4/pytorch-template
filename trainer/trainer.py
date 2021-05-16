@@ -3,7 +3,7 @@ import torch
 from torchvision.utils import make_grid
 from base import BaseTrainer
 from utils import inf_loop, MetricTracker
-
+import wandb
 
 class Trainer(BaseTrainer):
     """
@@ -52,7 +52,6 @@ class Trainer(BaseTrainer):
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
                 self.train_metrics.update(met.__name__, met(output, target))
-
             if batch_idx % self.log_step == 0:
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
                     epoch,
@@ -67,9 +66,11 @@ class Trainer(BaseTrainer):
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{'val_'+k : v for k, v in val_log.items()})
-
+            wandb.log(val_log)
+          
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
+        
         return log
 
     def _valid_epoch(self, epoch):
